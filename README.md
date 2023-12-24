@@ -12,3 +12,4 @@ $W_{1} = \sum_{i=1}^{p} \rho_{1,i} W_{1,i}$ and $W_{2} = \sum_{i=1}^{q} \rho_{2,
 
   * the code from sna: https://github.com/cran/sna/blob/master/R/models.R#L942
   * description for easy reading: https://rdrr.io/cran/sna/man/lnam.html
+  * my comparison with purely spatial regression approaches https://gist.github.com/slwu89/f4ed5a57f5490ec52648bbd687a6a3e7#file-netreg-r
