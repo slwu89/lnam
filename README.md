@@ -2,9 +2,7 @@
 
 The Linear Network Autocorrelation Model is:
 
-$
-y = W_{1} y + X \beta + \eps
-$
+$$ y = W_{1} y + X \beta + \eps $$
 
 $
 e = W_{2} e + \nu
