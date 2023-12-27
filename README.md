@@ -20,3 +20,7 @@ To-do:
   * JuMP version for MLE
   * RXInfer https://rxinfer.ml/
   * Turing https://turinglang.org/stable/
+
+Ideas:
+
+  * Static arrays as much as possible. Not sure if we can do static sparse matrices, but that would be a huge speed improvement.
