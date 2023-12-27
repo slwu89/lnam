@@ -75,6 +75,34 @@ parm$rho2<-rep(0,nw2)
 parm$sigmasq<-1
 parm$dev<-Inf
 
+
+# first iteration of estimate
+W1a<-diag(n)-agg(W1,parm$rho1)
+W2a<-diag(n)-agg(W2,parm$rho2)
+
+# assume covariates given ,estimate beta | rho
+tXtW2aW2a<-t(x)%*%t(W2a)%*%W2a
+parm$beta <- qr.solve(tXtW2aW2a%*%x,tXtW2aW2a%*%W1a%*%y)
+
+#Estimate sigma | beta, rho
+parm$sigmasq<-sigmasqhat(muhat(y,x,W1a,W2a,parm$beta))
+
+#If networks were given, (and not final) estimate rho | beta, sigma
+# n2ll.rho(rho,parm$beta,parm$sigmasq)
+
+if(!(final||(nw1+nw2==0))){
+  rho<-c(parm$rho1,parm$rho2)
+  temp<-optim(rho,n2ll.rho,method="BFGS",control=list(),beta=parm$beta, sigmasq=parm$sigmasq)
+  if(nw1>0)
+    parm$rho1<-temp$par[1:nw1]
+  if(nw2>0)
+    parm$rho2<-temp$par[(nw1+1):(nw1+nw2)]
+}
+
+
+
+
+
 #Fit the model
 olddev<-Inf
 while(is.na(parm$dev-olddev)||(abs(parm$dev-olddev)>tol)){
@@ -83,21 +111,19 @@ while(is.na(parm$dev-olddev)||(abs(parm$dev-olddev)>tol)){
 }
 parm<-estimate(parm,final=TRUE)  #Final refinement
 
-# first iteration of estimate
-W1a<-diag(n)-agg(W1,parm$rho1)
-W2a<-diag(n)-agg(W2,parm$rho2)
+
 
 
 
 
 # functions from lnam
-   #Define the log-likelihood functions for each case
-   agg<-function(a,w){
-     m<-length(w)
-     n<-dim(a)[2]
-     mat<-as.double(matrix(0,n,n))
-     matrix(.C("aggarray3d_R",as.double(a),as.double(w),mat=mat,as.integer(m), as.integer(n),PACKAGE="sna",NAOK=TRUE)$mat,n,n)
-   }
+#Define the log-likelihood functions for each case
+agg<-function(a,w){
+  m<-length(w)
+  n<-dim(a)[2]
+  mat<-as.double(matrix(0,n,n))
+  matrix(.C("aggarray3d_R",as.double(a),as.double(w),mat=mat,as.integer(m), as.integer(n),PACKAGE="sna",NAOK=TRUE)$mat,n,n)
+}
   #Estimate covariate effects, conditional on autocorrelation parameters
   betahat<-function(y,X,W1a,W2a){
     if(nw1==0){
