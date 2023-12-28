@@ -75,8 +75,19 @@ parm$rho2<-rep(0,nw2)
 parm$sigmasq<-1
 parm$dev<-Inf
 
+tol <- 1e-10
+method = "BFGS"
+control = list()
 
-# first iteration of estimate
+# --------------------------------------------------------------------------------
+# debug iterations
+parm<-estimate(parm,final=FALSE)
+parm<-estimate(parm,final=FALSE)
+parm<-estimate(parm,final=FALSE)
+
+# --------------------------------------------------------------------------------
+# by hand
+# an iteration of estimate
 W1a<-diag(n)-agg(W1,parm$rho1)
 W2a<-diag(n)-agg(W2,parm$rho2)
 
@@ -88,7 +99,7 @@ parm$beta <- qr.solve(tXtW2aW2a%*%x,tXtW2aW2a%*%W1a%*%y)
 parm$sigmasq<-sigmasqhat(muhat(y,x,W1a,W2a,parm$beta))
 
 #If networks were given, (and not final) estimate rho | beta, sigma
-# n2ll.rho(rho,parm$beta,parm$sigmasq)
+n2ll.rho(c(parm$rho1,parm$rho2),parm$beta,parm$sigmasq)
 
 if(!(final||(nw1+nw2==0))){
   rho<-c(parm$rho1,parm$rho2)
@@ -99,15 +110,29 @@ if(!(final||(nw1+nw2==0))){
     parm$rho2<-temp$par[(nw1+1):(nw1+nw2)]
 }
 
+#Calculate model deviance
+parm$dev<-n2ll(W1a,W2a,parm$sigmasq)
 
 
-
-
+# --------------------------------------------------------------------------------
 #Fit the model
+parm<-list()
+parm$beta<-rep(0,nx)
+parm$rho1<-rep(0,nw1)
+parm$rho2<-rep(0,nw2)
+parm$sigmasq<-1
+parm$dev<-Inf
+
+tol <- 1e-10
+method = "BFGS"
+control = list()
+
 olddev<-Inf
+i <- 0
 while(is.na(parm$dev-olddev)||(abs(parm$dev-olddev)>tol)){
     olddev<-parm$dev
     parm<-estimate(parm,final=FALSE)
+    i <- i + 1
 }
 parm<-estimate(parm,final=TRUE)  #Final refinement
 

@@ -1,6 +1,6 @@
 using CSV, Tables
 using LinearAlgebra, SparseArrays 
-using Optim, ForwardDiff
+using Optim, ForwardDiff, LineSearches
 
 # notes:
 # 1. it seems like In the R code we can compute Xb once for muhat and n2ll.rho
@@ -18,6 +18,8 @@ y = CSV.read("./data/y.csv", Tables.matrix)[:,1]
 n = length(y)
 nx = size(x,2)
 
+tol = 1E-10
+
 mutable struct Parameters
     beta::Vector{Float64}
     rho1::Float64
@@ -29,10 +31,28 @@ end
 Parameters(nx) = Parameters(zeros(nx), 0, 0, 1, Inf)
 
 parm = Parameters(nx)
+
+# ------------------------------------------------------
+# debug iterations
+parm = estimate(parm, n, x, y, w1, w2, false)
+parm = estimate(parm, n, x, y, w1, w2, false)
+parm = estimate(parm, n, x, y, w1, w2, false)
+
+
+# rho2 starts to diverge on the 3rd iteration.
+parm = Parameters(
+    [0.9103787,-0.8755734, 1.4188701,-0.4618064,-0.2639024],
+    0.1436447,
+    0.3566626,
+    1.323224,
+    219.271
+)
+
+
+# ------------------------------------------------------
+# an iteration of estimate  by hand
 W1 = deepcopy(w1)
 W2 = deepcopy(w2)
-
-# first iteration of estimate
 
 parm_new = deepcopy(parm)
 
@@ -42,17 +62,72 @@ W2a = I(n) - W2*parm_new.rho2
 
 # assume covariates given, estimate beta | rho
 tXtW2aW2a = transpose(x) * transpose(W2a) * W2a
-parm_new.beta .= (tXtW2aW2a * x) \ (tXtW2aW2a * W1a * y)
+parm_new.beta = (tXtW2aW2a * x) \ (tXtW2aW2a * W1a * y)
 
 #Estimate sigma | beta, rho
 parm_new.sigmasq = sigmasqhat(muhat(y,x,W1a,W2a,parm_new.beta))
 
 # (if not final iteration) estimate rho | beta, sigma
 n2ll_rho = make_n2ll_rho(n,parm_new.beta,parm_new.sigmasq,W1,W2,y,x)
-# n2ll_rho([parm_new.rho1;parm_new.rho2])
+n2ll_rho([parm_new.rho1,parm_new.rho2])
 
 rho = [parm_new.rho1,parm_new.rho2]
-temp = optimize(n2ll_rho, rho, BFGS(), autodiff=:forward)
+temp = optimize(n2ll_rho, rho, BFGS(linesearch=LineSearches.BackTracking()), autodiff=:forward)
+parm_new.rho1 = Optim.minimizer(temp)[1]
+parm_new.rho2 = Optim.minimizer(temp)[2]
+
+#Calculate model deviance
+parm_new.dev = n*(1+log(2π)+log(parm_new.sigmasq))- 2*(logabsdet(W1a)[1] + logabsdet(W2a)[1])
+
+# ------------------------------------------------------
+# the estimation routine
+parm = Parameters(nx)
+
+olddev = Inf
+i = 0
+while abs(parm.dev - olddev) > tol || i<1
+    olddev = parm.dev
+    parm = estimate(parm, n, x, y, w1, w2, false)
+    i += 1
+end
+parm = estimate(parm, n, x, y, w1, w2, true)
+
+
+
+
+# ------------------------------------------------------
+# fns
+
+# Conduct a single iterative refinement of a set of initial parameter estimates
+function estimate(parm, n, x, y, W1, W2, final::Bool=false)
+    parm_new = deepcopy(parm)
+
+    # aggregate weight matrices
+    W1a = LinearAlgebra.I(n) - W1*parm_new.rho1
+    W2a = LinearAlgebra.I(n) - W2*parm_new.rho2
+
+    # estimate beta | rho
+    tXtW2aW2a = transpose(x) * transpose(W2a) * W2a
+    parm_new.beta = (tXtW2aW2a * x) \ (tXtW2aW2a * W1a * y)
+
+    #Estimate sigma | beta, rho
+    parm_new.sigmasq = sigmasqhat(muhat(y,x,W1a,W2a,parm_new.beta))
+
+    # (if not final iteration) estimate rho | beta, sigma
+    if !final
+        n2ll_rho = make_n2ll_rho(n,parm_new.beta,parm_new.sigmasq,W1,W2,y,x)
+        rho = [parm_new.rho1,parm_new.rho2]
+        temp = optimize(n2ll_rho, rho, BFGS(linesearch=LineSearches.BackTracking()), autodiff=:forward)
+        parm_new.rho1 = Optim.minimizer(temp)[1]
+        parm_new.rho2 = Optim.minimizer(temp)[2]
+    end
+
+    #Calculate model deviance
+    parm_new.dev = n*(1+log(2π)+log(parm_new.sigmasq))- 2*(logabsdet(W1a)[1] + logabsdet(W2a)[1])
+
+    # return the parameter list
+    return parm_new
+end
 
 
 # fn to make n2ll.rho
@@ -83,6 +158,6 @@ function muhat(y,X,W1a,W2a,betahat)
 end
 
 #Estimate innovation variance, conditional on other effects
-sigmasqhat = function(muhat)
+function sigmasqhat(muhat)
     transpose(muhat) * muhat / prod(size(muhat))
 end
