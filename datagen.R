@@ -17,6 +17,7 @@
 # y<-qr.solve(diag(n)-r1*w1,x%*%beta+e)  #Compute y
 
 library(sna)
+library(numDeriv)
 
 # write info
 write.csv(file="./data/w1.csv", x=w1, row.names=FALSE)
@@ -136,8 +137,9 @@ while(is.na(parm$dev-olddev)||(abs(parm$dev-olddev)>tol)){
 }
 parm<-estimate(parm,final=TRUE)  #Final refinement
 
-
-
+# get info matrix
+mod_infomat<-infomat(parm)
+mod_acvm<-qr.solve(mod_infomat)
 
 
 
@@ -250,3 +252,37 @@ agg<-function(a,w){
     #Return the parameter list
     parm
   }
+
+
+#Calculate the expected Fisher information matrix for a fitted model
+infomat<-function(parm){     #Numerical version (requires numDeriv)
+  requireNamespace('numDeriv')
+  locnll<-function(par){
+    #Prepare ll elements according to which parameters are present
+    if(nw1>0){
+      W1a<-diag(n)-agg(W1,par[(nx+1):(nx+nw1)])
+      W1ay<-W1a%*%y
+      ladetW1a<-log(abs(det(W1a)))
+    }else{
+      W1ay<-y
+      ladetW1a<-0
+    }
+    if(nw2>0){
+      W2a<-diag(n)-agg(W2,par[(nx+nw1+1):(nx+nw1+nw2)])
+      tpW2a<-t(W2a)%*%W2a
+      ladetW2a<-log(abs(det(W2a)))
+    }else{
+      tpW2a<-diag(n)
+      ladetW2a<-0
+    }
+    if(nx>0){
+      Xb<-x%*%par[1:nx]
+    }else{
+      Xb<-0
+    }
+    #Compute and return
+    n/2*(log(2*pi)+log(par[m]))+ t(W1ay-Xb)%*%tpW2a%*%(W1ay-Xb)/(2*par[m]) -ladetW1a-ladetW2a
+  }
+  #Return the information matrix
+  numDeriv::hessian(locnll,c(parm$beta,parm$rho1,parm$rho2,parm$sigmasq)) 
+}

@@ -25,3 +25,4 @@ Ideas:
 
   * Static arrays as much as possible. Not sure if we can do static sparse matrices, but that would be a huge speed improvement.
   * Lots of computation can probably be cached during each iteration (Xb, "aggregated Ws", etc)
+  * Investigate alternative autodiff backends

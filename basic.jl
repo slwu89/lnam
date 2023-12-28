@@ -93,7 +93,24 @@ end
 parm = estimate(parm, n, x, y, w1, w2, true)
 
 
+# is locnll the same as n2ll_rho?
+n2ll_rho = make_n2ll_rho(n,parm.beta,parm.sigmasq,w1,w2,y,x)
+locnll = make_locnll(n,nx,w1,w2,y,x)
 
+n2ll_rho([parm.rho1,parm.rho2])
+locnll([parm.beta...,parm.rho1,parm.rho2,parm.sigmasq])
+
+infomat = ForwardDiff.hessian(locnll,[parm.beta...,parm.rho1,parm.rho2,parm.sigmasq])
+
+infomat2 = ForwardDiff.hessian(
+    par -> begin
+        n2ll_rho = make_n2ll_rho(n,par[1:nx],par[end],w1,w2,y,x)
+        return n2ll_rho(par[nx+1:nx+2])
+    end,
+    [parm.beta...,parm.rho1,parm.rho2,parm.sigmasq]
+)
+
+infomat2/2 ≈ infomat
 
 # ------------------------------------------------------
 # fns
@@ -149,6 +166,7 @@ function make_n2ll_rho(n,beta,sigmasq,W1,W2,y,x)
         # negloglike
         return n*(log(2*π)+log(sigmasq)) + transpose(W1ay-Xb)*tpW2a*(W1ay-Xb)/sigmasq - 2*(log(adetW1a)+log(adetW2a))
     end
+    return n2ll_rho
 end
 
 # Estimate predicted means, conditional on other effects
@@ -160,4 +178,27 @@ end
 #Estimate innovation variance, conditional on other effects
 function sigmasqhat(muhat)
     transpose(muhat) * muhat / prod(size(muhat))
+end
+
+# stuff to compute the Fisher info matrix
+function make_locnll(n,nx,W1,W2,y,x)
+    function locnll(pars)
+        beta = pars[1:nx]
+        rho1 = pars[nx+1]
+        rho2 = pars[nx+2]
+        sigmasq = pars[end]
+
+        W1a = LinearAlgebra.I(n) - W1*rho1
+        W1ay = W1a * y
+        ladetW1a = logabsdet(W1a)[1]
+
+        W2a = LinearAlgebra.I(n) - W2*rho2
+        tpW2a = transpose(W2a) * W2a
+        ladetW2a = logabsdet(W2a)[1]
+
+        Xb = x * beta
+
+        return n/2*(log(2π)+log(sigmasq))+ transpose(W1ay-Xb) * tpW2a * (W1ay-Xb)/(2*sigmasq) -ladetW1a-ladetW2a
+    end
+    return locnll
 end
