@@ -47,11 +47,11 @@ function estimate(parm, n, x, y, W1, W2, final::Bool=false)
 
     # (if not final iteration) estimate rho | beta, sigma
     if !final
-        n2ll_rho = make_n2ll_rho(n,parm_new.beta,parm_new.sigmasq,W1,W2,y,x)
+        n2ll_rho = make_n2ll_rho(n, nx, W1, W2, y, x, parm_new.beta, parm_new.sigmasq)
         rho = [parm_new.rho1,parm_new.rho2]
-        temp = optimize(n2ll_rho, rho, BFGS(linesearch=LineSearches.BackTracking()), autodiff=:forward)
-        parm_new.rho1 = Optim.minimizer(temp)[1]
-        parm_new.rho2 = Optim.minimizer(temp)[2]
+        rhohat = optimize(n2ll_rho, rho, BFGS(linesearch=LineSearches.BackTracking()), autodiff=:forward)
+        parm_new.rho1 = Optim.minimizer(rhohat)[1]
+        parm_new.rho2 = Optim.minimizer(rhohat)[2]
     end
 
     #Calculate model deviance
@@ -60,8 +60,6 @@ function estimate(parm, n, x, y, W1, W2, final::Bool=false)
     # return the parameter list
     return parm_new
 end
-
-
 
 """
     Return a function which computes the negative log likelihood.
@@ -97,4 +95,19 @@ function make_n2ll_rho(n,nx,W1,W2,y,x,beta,sigmasq)
         pars = [beta...,rho...,sigmasq]
         return 2*nll(pars)
     end
+end
+
+"""
+    Estimate predicted means, conditional on other effects
+"""
+function muhat(y,X,W1a,W2a,beta)
+    Xb = X * beta
+    return W2a * (W1a * y - Xb)
+end
+
+"""
+    Estimate innovation variance, conditional on other effects
+"""
+function sigmasqhat(muhat)
+    transpose(muhat) * muhat / prod(size(muhat))
 end
