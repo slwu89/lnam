@@ -4,6 +4,7 @@
 using CSV, Tables
 using LinearAlgebra, SparseArrays 
 using Optim, ForwardDiff, LineSearches
+using FiniteDiff
 
 include("./lnam.jl")
 
@@ -68,7 +69,10 @@ while abs(parmsp.dev - olddev) > tol || i<1
 end
 parmsp = estimate(parmsp, n, x, y, w1, w2, true, opt_nm)
 
-
+nll = make_nll(n,nx,w1s,w2s,y,x)
+infomat = FiniteDiff.finite_difference_hessian(nll, [parmsp.beta...,parmsp.rho1,parmsp.rho2,parmsp.sigmasq])
+acvm = inv(infomat)
+se = sqrt.(diag(acvm))
 
 # ----------------------------------------------------------------------
 # MWE: ForwardDiff.gradient does not work well with logabsdet and sparse matrices
