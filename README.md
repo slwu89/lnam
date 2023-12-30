@@ -21,8 +21,9 @@ To-do:
   * RXInfer https://rxinfer.ml/
   * Turing https://turinglang.org/stable/
 
-Ideas:
+Other:
 
   * Static arrays as much as possible. Not sure if we can do static sparse matrices, but that would be a huge speed improvement.
   * Lots of computation can probably be cached during each iteration (Xb, "aggregated Ws", etc)
   * Investigate alternative autodiff backends
+  * See: https://discourse.julialang.org/t/sparse-matrix-error-with-forward-diff/108170 autodiff with logabsdet and sparse matrix input fails

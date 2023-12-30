@@ -140,7 +140,7 @@ parm<-estimate(parm,final=TRUE)  #Final refinement
 # get info matrix
 mod_infomat<-infomat(parm)
 mod_acvm<-qr.solve(mod_infomat)
-
+mod_se <- sqrt(diag(mod_acvm))
 
 
 # functions from lnam

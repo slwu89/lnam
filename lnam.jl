@@ -14,10 +14,13 @@ end
 """
 Parameters(nx) = Parameters(zeros(nx), 0, 0, 1, Inf)
 
-function lnam(y, x, W1, W2, tol=1E-10)
+# function lnam(y, x, W1, W2, tol=1E-10)
     
-end
+# end
 
+function opt_bfgs(n2ll_rho, rho)
+    optimize(n2ll_rho, rho, Optim.BFGS(linesearch=LineSearches.BackTracking()), autodiff=:forward)
+end
 
 """
     Conduct a single iterative refinement of a set of initial parameter estimates.
@@ -29,9 +32,10 @@ end
 - `y`: outcome variable vector
 - `W1`: network autoregressive matrix
 - `W2`: network moving average matrix
-- `final`: if true, do not estimate rho 
+- `final`: if true, do not estimate rho
+- `opt_rho`: a function that optimizes the marginal nll of rho given starting values of rho
 """
-function estimate(parm, n, x, y, W1, W2, final::Bool=false)
+function estimate(parm, n, x, y, W1, W2, final::Bool=false, opt_rho::T=opt_bfgs) where {T<:Function}
     parm_new = deepcopy(parm)
 
     # aggregate weight matrices
@@ -49,7 +53,7 @@ function estimate(parm, n, x, y, W1, W2, final::Bool=false)
     if !final
         n2ll_rho = make_n2ll_rho(n, nx, W1, W2, y, x, parm_new.beta, parm_new.sigmasq)
         rho = [parm_new.rho1,parm_new.rho2]
-        rhohat = optimize(n2ll_rho, rho, BFGS(linesearch=LineSearches.BackTracking()), autodiff=:forward)
+        rhohat = opt_rho(n2ll_rho, rho)
         parm_new.rho1 = Optim.minimizer(rhohat)[1]
         parm_new.rho2 = Optim.minimizer(rhohat)[2]
     end
