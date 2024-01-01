@@ -1,6 +1,7 @@
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Catlab = "134e5e36-593f-5add-ad60-77f754baafbe"
+DataMigrations = "0c4ad18d-0c49-4bc2-90d5-5bca8f00d6ae"
 FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
