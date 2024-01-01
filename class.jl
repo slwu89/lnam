@@ -54,7 +54,6 @@ to_graphviz(
 )
 
 # data migration 1 mode
-
 M = @migration SchLabeledGraph SchUndirectedNamedBipartiteGraph begin
     V => V₁
     E => @join begin
@@ -66,6 +65,32 @@ M = @migration SchLabeledGraph SchUndirectedNamedBipartiteGraph begin
         src(e2) == s2
         tgt(e2) == c
     end
-    # src => e₁ ⋅ src
-    # tgt => e₂ ⋅ tgt
+    src => e1 ⋅ src
+    tgt => e2 ⋅ src
+    Label => Name
+    label => student
 end
+
+data_1mode = migrate(LabeledGraph{String}, data_2mode, M)
+
+to_graphviz(data_1mode, node_labels=:label)
+
+
+# ----------------------------------------------------------------------
+# smaller test data
+
+data_2mode = @acset UndirectedNamedBipartiteGraph{String} begin
+    V₁ = 5
+    student = ["Frank","Alice","Bob","Dan","Carol"]
+    V₂ = 3
+    class = ["History","Math","Biology"]
+    E = 6
+    src = [1,2,3,3,4,5]
+    tgt = [1,1,1,2,2,3]
+end
+
+to_graphviz(data_2mode, node_labels=(:student,:class))
+
+data_1mode = migrate(LabeledGraph{String}, data_2mode, M)
+
+to_graphviz(data_1mode, node_labels=:label)
