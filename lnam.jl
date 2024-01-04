@@ -14,10 +14,29 @@ end
 """
 Parameters(nx) = Parameters(zeros(nx), 0, 0, 1, Inf)
 
-# function lnam(y, x, W1, W2, tol=1E-10)
+"""
+    Fit the linear network autocorrelation model
+"""
+function lnam(y, x, W1, W2, opt_nm=opt_bfgs, tol=1E-10)
+    nx = size(x,2)
+    parm = Parameters(nx)
     
-# end
+    olddev = Inf
+    i = 0
+    while abs(parm.dev - olddev) > tol || i<1
+        olddev = parm.dev
+        parm = estimate(parm, n, x, y, W1, W2, false, opt_nm)
+        i += 1
+    end
+    parm = estimate(parm, n, x, y, W1, W2, true, opt_nm)
 
+    return parm, i
+end
+
+"""
+    Default optimization of rho parameters, using BFGS with backtracking line search, and forward
+mode autodiff for gradients.
+"""
 function opt_bfgs(n2ll_rho, rho)
     optimize(n2ll_rho, rho, Optim.BFGS(linesearch=LineSearches.BackTracking()), autodiff=:forward)
 end

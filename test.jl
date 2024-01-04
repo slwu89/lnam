@@ -10,14 +10,14 @@ include("./lnam.jl")
 
 # ----------------------------------------------------------------------
 # read data
-w1 = CSV.read("./data/w1.csv", Tables.matrix)
-w2 = CSV.read("./data/w2.csv", Tables.matrix)
-x = CSV.read("./data/x.csv", Tables.matrix)
+w1 = CSV.read("./data/small/w1.csv", Tables.matrix)
+w2 = CSV.read("./data/small/w2.csv", Tables.matrix)
+x = CSV.read("./data/small/x.csv", Tables.matrix)
 
-beta = CSV.read("./data/beta.csv", Tables.matrix)[:,1]
-nu = CSV.read("./data/nu.csv", Tables.matrix)[:,1]
-e = CSV.read("./data/e.csv", Tables.matrix)[:,1]
-y = CSV.read("./data/y.csv", Tables.matrix)[:,1]
+beta = CSV.read("./data/small/beta.csv", Tables.matrix)[:,1]
+nu = CSV.read("./data/small/nu.csv", Tables.matrix)[:,1]
+e = CSV.read("./data/small/e.csv", Tables.matrix)[:,1]
+y = CSV.read("./data/small/y.csv", Tables.matrix)[:,1]
 
 n = length(y)
 nx = size(x,2)

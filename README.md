@@ -14,6 +14,11 @@ $W_{1} = \sum_{i=1}^{p} \rho_{1,i} W_{1,i}$ and $W_{2} = \sum_{i=1}^{q} \rho_{2,
   * description for easy reading: https://rdrr.io/cran/sna/man/lnam.html
   * my comparison with purely spatial regression approaches https://gist.github.com/slwu89/f4ed5a57f5490ec52648bbd687a6a3e7#file-netreg-r
 
+In the spatial/economics literature, it seems that this model is called the "spatial autoregressive combined" model, and some references which specifically refer to it as such are at:
+
+  * https://journals.sagepub.com/doi/10.1177/0049124119882467
+  * https://link.springer.com/article/10.1007/s43071-022-00023-w
+
 To-do:
 
   * basic version (direct translation of R)
@@ -27,3 +32,4 @@ Other:
   * Lots of computation can probably be cached during each iteration (Xb, "aggregated Ws", etc)
   * Investigate alternative autodiff backends
   * See: https://discourse.julialang.org/t/sparse-matrix-error-with-forward-diff/108170 autodiff with logabsdet and sparse matrix input fails
+  

@@ -79,6 +79,7 @@ to_graphviz(data_1mode, node_labels=:label)
 # ----------------------------------------------------------------------
 # smaller test data
 
+# 2 mode (bipartite) to 1 mode (graph)
 data_2mode = @acset UndirectedNamedBipartiteGraph{String} begin
     V₁ = 5
     student = ["Frank","Alice","Bob","Dan","Carol"]
@@ -93,4 +94,38 @@ to_graphviz(data_2mode, node_labels=(:student,:class))
 
 data_1mode = migrate(LabeledGraph{String}, data_2mode, M)
 
+# remove self loops
+rem_parts!(
+    data_1mode,
+    :E,
+    findall(data_1mode[:,:src] .== data_1mode[:,:tgt])
+)
+
 to_graphviz(data_1mode, node_labels=:label)
+
+
+
+# ----------------------------------------------------------------------
+# symmetric graph? not actually that useful
+
+@present SchSymmetricLabeledGraph <: SchSymmetricGraph begin
+    Label::AttrType
+    label::Attr(V,Label)
+end
+
+@acset_type SymmetricLabeledGraph(SchSymmetricLabeledGraph, index=[:src]) <: AbstractSymmetricGraph
+
+# data migration 1 mode
+M2 = @migration SchSymmetricLabeledGraph SchLabeledGraph begin
+    V => V
+    E => @cases (fwd::E; rev::E)
+    src => (fwd => src; rev => tgt)
+    tgt => (fwd => tgt; rev => src)
+    inv => (fwd => rev; rev => fwd)
+    Label => Label
+    label => label
+end
+
+data_1mode_symm = migrate(SymmetricLabeledGraph{String}, data_1mode, M2)
+
+to_graphviz(data_1mode_symm, node_labels=:label)
