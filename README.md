@@ -4,9 +4,9 @@ The Linear Network Autocorrelation Model is:
 
 $$ y = W_{1} y + X \beta + \epsilon $$
 
-$$ \epsilon = W_{2} \epsilon + \nu $$
+$$ \epsilon = W_{2} \epsilon + \eta $$
 
-and where the matrices $W_{1}$ and $W_{2}$ include the "AR" and "MA" parameters:
+where $\eta \sim N(0,\sigma^2)$ and the matrices $W_{1}$ and $W_{2}$ include the "AR" and "MA" parameters:
 
 $W_{1} = \sum_{i=1}^{p} \rho_{1,i} W_{1,i}$ and $W_{2} = \sum_{i=1}^{q} \rho_{2,i}W_{2,i}$
 
