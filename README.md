@@ -32,4 +32,5 @@ Other:
   * Lots of computation can probably be cached during each iteration (Xb, "aggregated Ws", etc)
   * Investigate alternative autodiff backends
   * See: https://discourse.julialang.org/t/sparse-matrix-error-with-forward-diff/108170 autodiff with logabsdet and sparse matrix input fails
+  * faster linaglg: https://github.com/JuliaLinearAlgebra/MKL.jl, https://github.com/JuliaLinearAlgebra/Octavian.jl
   
